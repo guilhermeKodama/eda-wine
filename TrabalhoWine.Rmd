@@ -78,7 +78,7 @@ Temos um total de 13 colunas, com duas possíveis variáveis *targets* a variáv
 ```{r}
 sapply(Vinhos, function(x) sum(is.na(x)))
 ```
-Conseguimos observar que não temos nenhum valor faltante nesse dataset, isso é muito bom.
+Conseguimos observar que não temos nenhum valor faltante nesse dataset, eliminando a necessidade de tratar esses valores.
 
 ### Resumo dos dados
 
@@ -86,7 +86,7 @@ Conseguimos observar que não temos nenhum valor faltante nesse dataset, isso é
 summary(Vinhos)
 ```
 
-Aqui podemos observar que `residualsugar`, `chlorides`, `freesulfurdioxide` e `totalsulfurdioxide` tem valores muito espaçados de minimos e máximos, podendo indicar alguns outliners e também há uma falta de equilíbrio entre a quantidade de vinhos `RED` e `WHITE` podendo interferir nos resultados de classificação.
+Aqui podemos observar que `residualsugar`, `chlorides`, `freesulfurdioxide` e `totalsulfurdioxide` tem valores muito espaçados de minimos e máximos, podendo indicar alguns outliers e também há uma falta de equilíbrio entre a quantidade de vinhos `RED` e `WHITE` podendo interferir nos resultados de classificação.
 
 ### Visualizando as features
 
@@ -176,7 +176,7 @@ subplot(p11, p12, nrows=1)
 
 Descobertas:
 - Temos algumas características que se destacam para descrever a diferença entre os dois tipos de vinhos: Fixed Acidity, Volatile Acidity, Chlorides, Free Sulfur Dioxide, Total Sulfur Dioxide, Density, Sulphates.
-- As discrepâncias que há nessas características entre os tipos de vinhos seriam úteis em uma tarefa de classificação.
+- As discrepâncias que existem nessas características entre os tipos de vinhos seriam úteis em uma tarefa de classificação.
 - Podemos observar que só o tipo WHITE tem observações com nota 9, e há apenas 1 observação com essa nota. Isso significa que nunca vamos associar um vinho RED com essa nota o que indica que o nosso modelo provavelmente não generalizaria muito bem, precisariamos de dados mais completos.
 - Podemos observar possíveis outliers que precisam ser investigados. Ex: Alcohol, temos observações com quase 0% de alcohol, precisa ser verificar se é possível ter observações não alcolicas nessa amostra ou é um erro.
 
