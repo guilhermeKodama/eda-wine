@@ -269,7 +269,7 @@ plot_hist <- function(data1, name1, data2, name2, feature, title) {
   p <- plot_ly() %>%
     add_trace(x=trace1$x, histnorm=trace1$histnorm, marker=trace1$marker, name=trace1$name, opacity=trace1$opacity, type=trace1$type, uid=trace1$uid, visible=trace1$visible, xbins=trace1$xbins) %>%
     add_trace(x=trace2$x, histnorm=trace2$histnorm, marker=trace2$marker, name=trace2$name, opacity=trace2$opacity, type=trace2$type, uid=trace2$uid, visible=trace2$visible, xbins=trace2$xbins) %>%
-    layout(p, autosize=layout$autosize, barmode=layout$barmode, hovermode=layout$hovermode, legend=layout$legend, margin=layout$margin, showlegend=layout$showlegend, title=layout$title, xaxis=layout$xaxis, yaxis=layout$yaxis)
+    layout(autosize=layout$autosize, barmode=layout$barmode, hovermode=layout$hovermode, legend=layout$legend, margin=layout$margin, showlegend=layout$showlegend, title=layout$title, xaxis=layout$xaxis, yaxis=layout$yaxis)
   
   p
 }
