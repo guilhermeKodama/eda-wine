@@ -1,0 +1,492 @@
+---
+title: "trabalho-wine-statistica-fiap"
+author: "Guilherme Kodama"
+date: "27/12/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+install.packages("plotly")
+install.packages("dplyr")
+install.packages("corrgram")
+install.packages("outliers")
+```
+
+# EDA Dataset Qualidade de Vinhos
+
+Utilizando a base descrita e disponibilizada em aula o objetivo do trabalho é mensurar a variável “Quality” dos vinhos desta região de Portugal com as variáveis de características (composição) dos vinhos.
+
+## Objetivos
+
+Etapa 1 (Base)
+- Avaliar se a análise será feita com os dois tipos de vinhos juntos ou se separaria por tipo para analisá-los.
+- Análise exploratória de dados: Detecção de outliers, gráficos e análise sobre os dois tipos de vinhos. Correlações entre elas (numéricas e gráficos).
+- Conclusão: colocar qual a opção seguirá sobre os tipos de vinhos , sobre os outliers (caso tenha) e o uso de Componentes Principais
+
+Etapa 2 (Algoritmos explicar variável `Quality`)
+- Modelo 1: Regressão Linear
+- Modelo 2: Árvore de regressão
+- Para cada modelo fazer as análises adequadas como: 
+  - explicar a técnica
+  - qual a variável dependente, 
+  - quais são as variáveis independentes,
+  - relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
+  - saída do modelo (análise)
+  - qualidade do modelo
+  - O que cada modelo gerou de resultados?
+- Comparação entre modelos
+  - Utilizando as métricas adequadas para comparação de modelos façam um resumo sobre a qualidade dos modelos e indiquem qual o modelo/ técnica que vocês
+  recomendariam
+
+Etapa 3 (Algoritmos explicar variável "Quality": Vinhos bons e ruins)
+- Modelo 1: Árvore de decisão
+- Modelo 2: Regressão Logística
+- Para cada modelo fazer as análises adequeadas como:
+  - explicar a técnica
+  - qual a variável dependente, 
+  - quais são as variáveis independentes,
+  - relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
+  - saída do modelo (análise)
+  - qualidade do modelo
+  - O que cada modelo gerou de resultados?
+- Comparação dos modelos
+  - Utilizando as métricas adequadas para comparação de modelos façam um resumo sobre a qualidade dos modelos e indiquem qual o modelo/ técnica que vocês
+  recomendariam
+
+Etapa 4 (Análise sobre outras possíveis técnicas)
+- quais outras técnicas supervisionadas vocês indicariam como adequadas para esta análise?
+- e, das técnicas Não Supervisionadas, quais?
+
+
+## Etapa 1 - Análisa do dataset
+
+```{r}
+require(plotly)
+require(dplyr)
+require(corrgram)
+require(outliers)
+
+Vinhos <- read.csv2("BaseWine_Red_e_White2018.csv", row.names=1)
+attach(Vinhos)
+Vinhos
+```
+Temos um total de 13 colunas, com duas possíveis variáveis *targets* a variável `quality` e `Vinho`. A coluna `Vinho` já está corretamente indicada como sendo categórica, e podemos fazer a mesma coisa para `quality` mais pra frente se acharmos necessário.
+
+### Identificar NAs
+
+```{r}
+sapply(Vinhos, function(x) sum(is.na(x)))
+```
+Conseguimos observar que não temos nenhum valor faltante nesse dataset, isso é muito bom.
+
+### Resumo dos dados
+
+```{r}
+summary(Vinhos)
+```
+
+Aqui podemos observar que `residualsugar`, `chlorides`, `freesulfurdioxide` e `totalsulfurdioxide` tem valores muito espaçados de minimos e máximos, podendo indicar alguns outliners e também há uma falta de equilíbrio entre a quantidade de vinhos `RED` e `WHITE` podendo interferir nos resultados de classificação.
+
+### Visualizando as features
+
+BoxPlot das features
+
+```{r}
+p1 <- plot_ly(y = fixedacidity, type="box", name = "Fixed Acidity")
+p2 <- plot_ly(y = volatileacidity, type="box", name = "Volatile Acidity")
+p3 <- plot_ly(y = citricacid, type="box", name = "Citric Acid")
+p4 <- plot_ly(y = residualsugar, type="box", name = "Residual Sugar")
+p5 <- plot_ly(y = chlorides, type="box", name = "Chlorides")
+p6 <- plot_ly(y = freesulfurdioxide, type="box", name = "Free Sulfur Dioxide")
+subplot(p1, p2, p3, p4, p5, p6, nrows=3)
+```
+
+```{r}
+p7 <- plot_ly(y = totalsulfurdioxide, type="box", name = "Total Sulfur Dioxide")
+p8 <- plot_ly(y = density, type="box", name = "Density")
+p9 <- plot_ly(y = pH, type="box", name = "PH")
+p10 <- plot_ly(y = sulphates, type="box", name = "Sulphates")
+p11 <- plot_ly(y = alcohol, type="box", name = "Alcohol")
+p12 <- plot_ly(y = quality, type="box", name = "Quality")
+subplot(p7, p8, p9, p10, p11, p12, nrows=3)
+```
+
+Historigramas das features
+
+```{r}
+p1 <- plot_ly(x = fixedacidity, type="histogram", name = "Fixed Acidity")
+p2 <- plot_ly(x = volatileacidity, type="histogram", name = "Volatile Acidity")
+p3 <- plot_ly(x = citricacid, type="histogram", name = "Citric Acid")
+p4 <- plot_ly(x = residualsugar, type="histogram", name = "Residual Sugar")
+p5 <- plot_ly(x = chlorides, type="histogram", name = "Chlorides")
+p6 <- plot_ly(x = freesulfurdioxide, type="histogram", name = "Free Sulfur Dioxide")
+subplot(p1, p2, p3, p4, p5, p6, nrows=3)
+```
+
+```{r}
+p7 <- plot_ly(x = totalsulfurdioxide, type="histogram", name = "Total Sulfur Dioxide")
+p8 <- plot_ly(x = density, type="histogram", name = "Density")
+p9 <- plot_ly(x = pH, type="histogram", name = "PH")
+p10 <- plot_ly(x = sulphates, type="histogram", name = "Sulphates")
+p11 <- plot_ly(x = alcohol, type="histogram", name = "Alcohol")
+p12 <- plot_ly(x = quality, type="histogram", name = "Quality")
+subplot(p7, p8, p9, p10, p11, p12, nrows=3)
+```
+
+## Etapa 1 - Análise sobre os dois tipos de vinhos
+
+### BoxPlot
+
+```{r}
+p1 <- plot_ly(x = Vinho, y = fixedacidity, color = Vinho, type="box", name = "Fixed Acidity")
+p2 <- plot_ly(x = Vinho, y = volatileacidity, color = Vinho, type="box", name = "Volatile Acidity")
+subplot(p1, p2, nrows=1)
+```
+
+```{r}
+p3 <- plot_ly(x = Vinho, y = citricacid, color = Vinho, type="box", name = "Citric Acid")
+p4 <- plot_ly(x = Vinho, y = residualsugar, color = Vinho, type="box", name = "Residual Sugar")
+subplot(p3, p4, nrows=1)
+```
+
+```{r}
+p5 <- plot_ly(x = Vinho, y = chlorides, color = Vinho, type="box", name = "Chlorides")
+p6 <- plot_ly(x = Vinho, y = freesulfurdioxide, color = Vinho, type="box", name = "Free Sulfur Dioxide")
+subplot(p5, p6, nrows=1)
+```
+
+```{r}
+p7 <- plot_ly(x = Vinho, y = totalsulfurdioxide, color = Vinho, type="box", name = "Total Sulfur Dioxide")
+p8 <- plot_ly(x = Vinho, y = density, type="box", color = Vinho, name = "Density")
+subplot(p7, p8, nrows=1)
+```
+
+```{r}
+p9 <- plot_ly(x = Vinho, y = pH, color = Vinho, type="box", name = "PH")
+p10 <- plot_ly(x = Vinho, y = sulphates, color = Vinho, type="box", name = "Sulphates")
+subplot(p9, p10, nrows=1)
+```
+
+```{r}
+p11 <- plot_ly(x = Vinho, y = alcohol, color = Vinho, type="box", name = "Alcohol")
+p12 <- plot_ly(x = Vinho, y = quality, color = Vinho, type="box", name = "Quality")
+subplot(p11, p12, nrows=1)
+```
+
+Descobertas:
+- Temos algumas características que se destacam para descrever a diferença entre os dois tipos de vinhos: Fixed Acidity, Volatile Acidity, Chlorides, Free Sulfur Dioxide, Total Sulfur Dioxide, Density, Sulphates.
+- As discrepâncias que há nessas características entre os tipos de vinhos seriam úteis em uma tarefa de classificação.
+- Podemos observar que só o tipo WHITE tem observações com nota 9, e há apenas 1 observação com essa nota. Isso significa que nunca vamos associar um vinho RED com essa nota o que indica que o nosso modelo provavelmente não generalizaria muito bem, precisariamos de dados mais completos.
+- Podemos observar possíveis outliers que precisam ser investigados. Ex: Alcohol, temos observações com quase 0% de alcohol, precisa ser verificar se é possível ter observações não alcolicas nessa amostra ou é um erro.
+
+### Histogram
+
+Separando os dados entre RED VS WHITE
+
+```{r}
+Vinhos %>% 
+  filter(Vinho == "RED") -> RED
+
+Vinhos %>% 
+  filter(Vinho == "WHITE") -> WHITE
+```
+
+
+Analisando o equilibrio dos dois grupos no dataset
+
+```{r}
+plot_ly(x = Vinho, type="histogram", name = "RED VS WHITE")
+```
+
+Criando função para facilitar os plots
+
+```{r}
+plot_hist <- function(data1, name1, data2, name2, feature, title) {
+  trace1 <- list(
+    x = data1[,feature], 
+    marker = list(line = list(
+      color = "rgb(217, 217, 217)", 
+      width = 0
+    )), 
+    name = name1, 
+    opacity = 0.75, 
+    type = "histogram", 
+  visible = TRUE
+  )
+
+  trace2 <- list(
+    x = data2[,feature],
+    marker = list(
+      color = "rgb(23, 190, 207)", 
+      line = list(
+        color = "rgb(217, 217, 217)", 
+        width = 0
+      )
+    ), 
+    name = name2, 
+    opacity = 0.75, 
+    type = "histogram", 
+    visible = TRUE
+  )
+
+  data <- list(trace1, trace2)
+
+  layout <- list(
+    autosize = TRUE, 
+    barmode = "overlay", 
+    height = 521, 
+    hovermode = "closest", 
+    legend = list(
+      x = 1.0208, 
+      y = 0.943734015345
+    ), 
+    margin = list(
+      r = 50, 
+      t = 65, 
+      b = 65, 
+      l = 65
+    ), 
+    showlegend = TRUE, 
+    title = "", 
+    width = 788, 
+    xaxis = list(
+      anchor = "y2", 
+      autorange = TRUE, 
+      range = c(-3.2795847824, 4.52178374944), 
+      title = title, 
+      type = "linear"
+    ), 
+    yaxis = list(
+      autorange = TRUE, 
+      domain = c(0.2, 1), 
+      range = c(0, 0.0968421052632), 
+      title = "Values", 
+      type = "linear"
+    )
+  )
+
+  p <- plot_ly() %>%
+    add_trace(x=trace1$x, histnorm=trace1$histnorm, marker=trace1$marker, name=trace1$name, opacity=trace1$opacity, type=trace1$type, uid=trace1$uid, visible=trace1$visible, xbins=trace1$xbins) %>%
+    add_trace(x=trace2$x, histnorm=trace2$histnorm, marker=trace2$marker, name=trace2$name, opacity=trace2$opacity, type=trace2$type, uid=trace2$uid, visible=trace2$visible, xbins=trace2$xbins) %>%
+    layout(p, autosize=layout$autosize, barmode=layout$barmode, hovermode=layout$hovermode, legend=layout$legend, margin=layout$margin, showlegend=layout$showlegend, title=layout$title, xaxis=layout$xaxis, yaxis=layout$yaxis)
+  
+  p
+}
+```
+
+
+
+```{r}
+plot_hist(RED, "RED", WHITE, "WHITE", "fixedacidity", "Fixed Acidity")
+```
+
+```{r}
+plot_hist(RED, "RED", WHITE, "WHITE", "volatileacidity", "Volatile Acidity")
+```
+
+
+
+```{r}
+plot_hist(RED, "RED", WHITE, "WHITE", "citricacid", "Citric Acid")
+```
+
+```{r}
+plot_hist(RED, "RED", WHITE, "WHITE", "residualsugar", "Residual Sugar")
+```
+
+```{r}
+plot_hist(RED, "RED", WHITE, "WHITE", "chlorides", "Chlorides")
+```
+
+```{r}
+plot_hist(RED, "RED", WHITE, "WHITE", "freesulfurdioxide", "Free Sulfur Dioxide")
+```
+
+```{r}
+plot_hist(RED, "RED", WHITE, "WHITE", "totalsulfurdioxide", "Total Sulfur Dioxide")
+```
+
+```{r}
+plot_hist(RED, "RED", WHITE, "WHITE", "density", "Density")
+```
+
+```{r}
+plot_hist(RED, "RED", WHITE, "WHITE", "pH", "PH")
+```
+
+```{r}
+plot_hist(RED, "RED", WHITE, "WHITE", "sulphates", "Sulphates")
+```
+
+```{r}
+plot_hist(RED, "RED", WHITE, "WHITE", "alcohol", "Alcohol")
+```
+
+Descobertas:
+- Podemos observar basicamente os mesmos destaques que algumas features apresentam entre os tipos de vinho RED vs WHITE que visualizamos no Box PLot.
+
+## Etapa 1 - Correlação entre as features
+
+Correlação das features dos vinhos de todos os tipos em números
+
+```{r}
+v <- Vinhos %>% select(c(quality,fixedacidity,volatileacidity,citricacid,residualsugar,
+                                                 chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,
+                                                 sulphates,alcohol))
+
+vw  <- subset(Vinhos, Vinho=="WHITE", select=c(quality,fixedacidity,volatileacidity,citricacid,residualsugar,
+                                                 chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,
+                                                 sulphates,alcohol))
+vr <- subset(Vinhos, Vinho=="RED", select=c(quality,fixedacidity,volatileacidity,citricacid,residualsugar,
+                                                 chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,
+                                                 sulphates,alcohol))
+
+matcorV <- cor(v)
+matcorVW <- cor(vw)
+matcorVR <- cor(vr)
+print(matcorV, digits = 2)
+```
+
+Correlação das features dos vinhos de todos os tipo visualização
+
+```{r}
+corrgram(matcorV, type = "cor", lower.panel = panel.shade, upper.panel = panel.pie)
+```
+
+Correlação das features dos vinhos Brancos
+
+```{r}
+corrgram(matcorVW, type = "cor", lower.panel = panel.shade, upper.panel = panel.pie)
+```
+
+Correlação das features dos vinhos Vermelhos
+
+```{r}
+corrgram(matcorVR, type = "cor", lower.panel = panel.shade, upper.panel = panel.pie)
+```
+
+Descobertas:
+- Observamos que no dataset em geral `Alcohol` tem uma correlação positiva alta com `Quality`.
+- Densidade tem a maior correlação negativa com qualidade porém nada alarmante
+- `Dióxido de Enxofre Livre` e `Dióxido de Enxofre Total` tem uma grande correlação positiva e imagino que isso seja intuitivo, portanto podemos escolher apenas uma delas para usar no nosso modelo.
+- Outra variáveis como `Fixed Acidity`, `Density`, `Residual Sugar` tem grandes correlações positivas e negativas entre sí e podem ser analisadas para descarte caso necessário.
+- A correlação entre as variáveis dos vinhos `WHITE` e `RED` apresentam algumas divergências. 
+- Os vinhos do tipo `WHITE` apresentam correlações consistentes com a matrix do dataset total, e isso pode ser explicado pelo fato de haver mais observações desse tipo de vinho, enquanto as do tipo `RED` apresentam variáveis como `Volatile Acidity` com correlação negativa a `Quality` e `Citric Acid`, `Sulphates` com correlação positiva maior com `Quality`. `Fixed Acidity`, `Citric Acidity`, `Fixed Acidity`, `Density`, `PH`, `Volatile Acidity` apresentam grandes correlações entre sí tanto positivas como negativas e podem ser analisadas para utilização de apenas uma dentre os pares.
+
+## Etapa 1 -  PCA
+
+```{r}
+v <- Vinhos %>% select(c(fixedacidity,volatileacidity,citricacid,residualsugar,
+chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,sulphates,alcohol))
+
+prcomp(v, scale = T)
+```
+
+```{r}
+plot(prcomp(v, scale = T))
+```
+
+```{r}
+summary(prcomp(v, scale = T))
+```
+
+```{r}
+biplot(prcomp(v, scale = TRUE))
+```
+
+Descobertas:
+- A variação proporcional encontrada pelo PCA no seu melhor componente é muito baixa. PC1 explica cerca de 27% da variancia total. Baseado nisso não acredito que terá grandes vantagens de adicionar esses componetes no modelo.
+- Podemos ver também basedo na `Rotation` que temos features com correlações muito fortes como: `freesulfurdioxide` e `totalsulfurdioxide`, também `fixedacidity` e `volatileacidity`, que já haviamos identificado em outras partes da análise e podem ser candidatas para utilizar apenas uma delas.
+
+## Etapa 1 - Outliers
+
+```{r}
+v <- Vinhos %>% select(c(fixedacidity,volatileacidity,citricacid,residualsugar,
+chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,sulphates,alcohol))
+
+v <- rm.outlier(v, fill = T, median = T, opposite = FALSE)
+```
+
+Descobertas:
+- Como sabemos que os modelos de regressão são muito sensíveis a outliers nós iremos remove-los e preenche-los com a mediana.
+- Decidimos por não remover a observação inteira para não prejudicar o numero de observações totais de determinadas notas de qualidade.
+
+## Etapa 1 - Conclusão
+
+Q) Qual a opção seguirá sobre os tipos de vinhos?
+
+Minha sugestão é criar modelos separados para a tarefa de regressão e classificação da feature `Quality`. Por que existem muito mais observações de `WHITE` do que `RED` isso indica que podemos acabar gerando um modelo que acerta bem para vinhos brancos e não tão bem para vinhos vermelhos, esse desbalanço do dataset pode fazer com que as características dos dois tipos não apareça no modelo.
+Porém eu gostaria de comprovar essa minha intuição na parte do treinamento do modelo.
+
+Q) Qual estratégia sobre os outliers?
+
+Substituir outliers com a mediana, mantendo a informação porém evitando prejudicar os modelos de regressão.
+
+Q) Vai utilizar PCA? Justifique
+
+Não, os componentes gerados apresentaram uma variação proporcional muito baixa, creio que não veriamos vantagens em utiliza-las.
+
+## Etapa 2 - Regressão variável Quality
+
+## Etapa 2 - Regressão Linear
+
+  - explicar a técnica
+  - qual a variável dependente, 
+  - quais são as variáveis independentes,
+  - relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
+  - saída do modelo (análise)
+  - qualidade do modelo
+  - O que cada modelo gerou de resultados?
+
+## Etapa 2 - Árvore de regressão
+
+  - explicar a técnica
+  - qual a variável dependente, 
+  - quais são as variáveis independentes,
+  - relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
+  - saída do modelo (análise)
+  - qualidade do modelo
+  - O que cada modelo gerou de resultados?
+
+## Etapa 2 - Comparação entre modelos
+
+utilizando as métricas adequadas para comparação de modelos façam um resumo sobre a qualidade dos modelos e indiquem qual o modelo/ técnica que vocês recomendariam
+
+## Etapa 3 - Classificação com variável Quality: Vinhos bons e ruins
+
+## Etapa 3 - Árvore de decisão
+
+  - explicar a técnica
+  - qual a variável dependente, 
+  - quais são as variáveis independentes,
+  - relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
+  - saída do modelo (análise)
+  - qualidade do modelo
+  - O que cada modelo gerou de resultados?
+
+## Etapa 3 - Regressão Logística
+
+  - explicar a técnica
+  - qual a variável dependente, 
+  - quais são as variáveis independentes,
+  - relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
+  - saída do modelo (análise)
+  - qualidade do modelo
+  - O que cada modelo gerou de resultados?
+  
+## Etapa 3 - Comparação dos modelos
+
+Utilizando as métricas adequadas para comparação de modelos façam um resumo sobre a qualidade dos modelos e indiquem qual o modelo/ técnica que vocês
+  recomendariam
+
+## Etapa 4 - Análise sobre outras possíveis técnicas
+
+## Etapa 4 - Outras técnicas supervisionadas
+
+quais outras técnicas supervisionadas vocês indicariam como adequadas para esta análise?
+
+## Etapa 4 - Técnicas não supervisionadas
+
+e, das técnicas Não Supervisionadas, quais?
+
