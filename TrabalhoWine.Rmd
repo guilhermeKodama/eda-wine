@@ -487,6 +487,24 @@ Descobertas:
 
 ## Etapa 2 - Árvore de regressão
 
+A técnica para aplicar árvores de decisões em problemas de regressão começa tentando dividir os dados em regiões, em cada iteração e para cada variável o algoritmo tenta achar o ponto ótimo `s` que divide as regiões na qual minimize o somatório quadrático dos erros de cada região. Essa técnica é realizada através de algoritmo gulosos e é conhecida como `recursive binary splitting`.
+Uma vez que essa estrutura é montado o algoritmo utliza a média da região no qual a observação se encontra para fazer uma previsão.
+As árvores de decisão tendem ao `overfitting` então é necessário fazer um fine tunning com alguns hyperparametros para ajusta-las, como por exemplo o numero máximo de galhos em um nó e o numero mínimo de observações que uma folha pode conter.
+
+```{r}
+library(rpart)
+fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
+fit2 <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis,
+              parms = list(prior = c(.65,.35), split = "information"))
+fit3 <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis,
+              control = rpart.control(cp = 0.05))
+par(mfrow = c(1,2), xpd = NA) # otherwise on some devices the text is clipped
+plot(fit)
+text(fit, use.n = TRUE)
+plot(fit2)
+text(fit2, use.n = TRUE)
+```
+
   - explicar a técnica
   - qual a variável dependente, 
   - quais são as variáveis independentes,
