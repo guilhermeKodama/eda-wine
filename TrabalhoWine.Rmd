@@ -1,6 +1,6 @@
 ---
 title: "trabalho-wine-statistica-fiap"
-author: "Guilherme Kodama"
+author: "Guilherme Kodama, Ana Raquel Cunha, Felipe Stangorlini"
 date: "27/12/2018"
 output: html_document
 ---
