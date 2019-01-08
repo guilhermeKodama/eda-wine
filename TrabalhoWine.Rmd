@@ -427,9 +427,55 @@ Q) Vai utilizar PCA? Justifique
 
 Não, os componentes gerados apresentaram uma variação proporcional muito baixa, e não vemos vantagens em utilizá-los.
 
+## Etapa 2 - Preparação para dados de treino e teste
+
+A seguir definiremos 2/3 da base de vinhos brancos para treino, e 1/3 para teste
+```{r}
+prt <- 2/3
+set.seed(666)
+treino <- sample(1:nrow(vw), as.integer(prt*nrow(vw)))
+dataTreino <- vw[treino,]
+dataTeste <- vw[-treino,]
+```
+
+Validando a consistência de qualidade entre as bases de treino e teste
+```{r}
+prop.table(table(dataTreino$quality))
+```
+
+```{r}
+prop.table(table(dataTeste$quality))
+```
+
 ## Etapa 2 - Regressão variável Quality
 
 ## Etapa 2 - Regressão Linear
+
+## Regressão linear
+
+Realizando a regressão linear com todas as variáveis
+```{r}
+x <- lm(quality~fixedacidity+volatileacidity+citricacid+residualsugar+chlorides+freesulfurdioxide+totalsulfurdioxide+density+pH+sulphates+alcohol, data=dataTreino)
+```
+Analisando o summary
+```{r}
+summary(x)
+```
+Descobertas:
+- Algumas variáveis estão sendo consideradas, mas possuem baixo nível de significância, portanto podemos eliminá-las
+
+
+Eliminando variáveis não significativas
+```{r}
+stepwise <- step(x,direction="both")
+y <- lm(quality ~ fixedacidity + volatileacidity + residualsugar + freesulfurdioxide + density + pH + sulphates, data=dataTreino)
+
+summary(y)  
+```
+Descobertas:
+- Identificamos que o `p-value` é menor que 5% então podemos rejeitar a hipótese nula
+- Outro fator é que o `Rsquared` é de 29, o que significa que a regressão linear não descreve o modelo com tanta precisão
+
 
   - explicar a técnica
   - qual a variável dependente, 
