@@ -372,7 +372,7 @@ Descobertas:
 - `Dióxido de Enxofre Livre` e `Dióxido de Enxofre Total` tem uma grande correlação positiva e imagino que isso seja intuitivo, portanto podemos escolher apenas uma delas para usar no nosso modelo.
 - Outra variáveis como `Fixed Acidity`, `Density`, `Residual Sugar` tem grandes correlações positivas e negativas entre sí e podem ser analisadas para descarte caso necessário.
 - A correlação entre as variáveis dos vinhos `WHITE` e `RED` apresentam algumas divergências. 
-- Os vinhos do tipo `WHITE` apresentam correlações consistentes com a matrix do dataset total, e isso pode ser explicado pelo fato de haver mais observações desse tipo de vinho, enquanto as do tipo `RED` apresentam variáveis como `Volatile Acidity` com correlação negativa a `Quality` e `Citric Acid`, `Sulphates` com correlação positiva maior com `Quality`. `Fixed Acidity`, `Citric Acidity`, `Fixed Acidity`, `Density`, `PH`, `Volatile Acidity` apresentam grandes correlações entre sí tanto positivas como negativas e podem ser analisadas para utilização de apenas uma dentre os pares.
+- Os vinhos do tipo `WHITE` apresentam correlações consistentes com a matriz do dataset total, e isso pode ser explicado pelo fato de haver mais observações desse tipo de vinho, enquanto as do tipo `RED` apresentam variáveis como `Volatile Acidity` com correlação negativa a `Quality` e `Citric Acid`, `Sulphates` com correlação positiva maior com `Quality`. `Fixed Acidity`, `Citric Acidity`, `Fixed Acidity`, `Density`, `PH`, `Volatile Acidity` apresentam grandes correlações entre si tanto positivas como negativas, e podem ser analisadas para utilização de apenas uma dentre os pares.
 
 ## Etapa 1 -  PCA
 
@@ -396,8 +396,8 @@ biplot(prcomp(v, scale = TRUE))
 ```
 
 Descobertas:
-- A variação proporcional encontrada pelo PCA no seu melhor componente é muito baixa. PC1 explica cerca de 27% da variancia total. Baseado nisso não acredito que terá grandes vantagens de adicionar esses componetes no modelo.
-- Podemos ver também basedo na `Rotation` que temos features com correlações muito fortes como: `freesulfurdioxide` e `totalsulfurdioxide`, também `fixedacidity` e `volatileacidity`, que já haviamos identificado em outras partes da análise e podem ser candidatas para utilizar apenas uma delas.
+- A variação proporcional encontrada pelo PCA no seu melhor componente é muito baixa. PC1 explica cerca de 27% da variância total. Baseado nisso não teremos grandes vantagens em adicionar esses componetes ao modelo.
+- Podemos ver também basedo na `Rotation` que temos features com correlações muito fortes como: `freesulfurdioxide` e `totalsulfurdioxide`, também `fixedacidity` e `volatileacidity`, que já havíamos identificado em outras partes da análise e podem ser candidatas para utilizar apenas uma delas.
 
 ## Etapa 1 - Outliers
 
@@ -409,15 +409,15 @@ v <- rm.outlier(v, fill = T, median = T, opposite = FALSE)
 ```
 
 Descobertas:
-- Como sabemos que os modelos de regressão são muito sensíveis a outliers nós iremos remove-los e preenche-los com a mediana.
-- Decidimos por não remover a observação inteira para não prejudicar o numero de observações totais de determinadas notas de qualidade.
+- Como sabemos que os modelos de regressão são muito sensíveis a outliers nós iremos removê-los e preenchê-los com a mediana.
+- Decidimos por não remover a observação inteira para não prejudicar o número de observações totais de determinadas notas de qualidade.
 
 ## Etapa 1 - Conclusão
 
 Q) Qual a opção seguirá sobre os tipos de vinhos?
 
-Minha sugestão é criar modelos separados para a tarefa de regressão e classificação da feature `Quality`. Por que existem muito mais observações de `WHITE` do que `RED` isso indica que podemos acabar gerando um modelo que acerta bem para vinhos brancos e não tão bem para vinhos vermelhos, esse desbalanço do dataset pode fazer com que as características dos dois tipos não apareça no modelo.
-Porém eu gostaria de comprovar essa minha intuição na parte do treinamento do modelo.
+Criaremos modelos separados para a tarefa de regressão e classificação da feature `Quality`, porque existem um número relativamente maior de observações de `WHITE` em relação a `RED`. Isso indica que podemos acabar gerando um modelo mais acertivo para vinhos brancos e nem tanto para vinhos vermelhos, esse desbalanço do dataset pode fazer com que as características dos dois tipos não apareçam no modelo.
+Porém gostaríamos de comprovar a ideia na parte do treinamento do modelo.
 
 Q) Qual estratégia sobre os outliers?
 
@@ -425,7 +425,7 @@ Substituir outliers com a mediana, mantendo a informação porém evitando preju
 
 Q) Vai utilizar PCA? Justifique
 
-Não, os componentes gerados apresentaram uma variação proporcional muito baixa, creio que não veriamos vantagens em utiliza-las.
+Não, os componentes gerados apresentaram uma variação proporcional muito baixa, e não vemos vantagens em utilizá-los.
 
 ## Etapa 2 - Regressão variável Quality
 
