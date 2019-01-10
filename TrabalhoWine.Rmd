@@ -480,6 +480,7 @@ Descobertas:
 
 Conclusão:
 - O modelo criado através da técnica de regressão linear não descreve muito bem a nota de qualidade dos vinhos, com uma acertividade de aproximadamente 30%
+- Não será necessário fazer o modelo de predição, devido ao baixo índice de acertividade
 
 ## Etapa 2 - Árvore de regressão
 
