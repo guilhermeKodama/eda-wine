@@ -406,6 +406,7 @@ v <- Vinhos %>% select(c(fixedacidity,volatileacidity,citricacid,residualsugar,
 chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,sulphates,alcohol))
 
 v <- rm.outlier(v, fill = T, median = T, opposite = FALSE)
+vw <- rm.outlier(vw, fill = T, median = T, opposite = FALSE)
 ```
 
 Descobertas:
@@ -446,12 +447,13 @@ prop.table(table(dataTreino$quality))
 ```{r}
 prop.table(table(dataTeste$quality))
 ```
+Descobertas:
+- As proporções estão razoavelmente bem distribuídas entre as notas de qualidade. Isso leva a ter um bom treino para o modelo
+
 
 ## Etapa 2 - Regressão variável Quality
 
 ## Etapa 2 - Regressão Linear
-
-## Regressão linear
 
 Realizando a regressão linear com todas as variáveis
 ```{r}
