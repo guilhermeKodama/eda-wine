@@ -524,7 +524,7 @@ m1 <- rpart(
   method  = "anova"
   )
 
-pred1 <- predict(m, newdata = v_test)
+pred1 <- predict(m1, newdata = v_test)
 RMSE(pred = pred1, obs = v_test$quality)
 ```
 
@@ -544,8 +544,7 @@ set.seed(123)
 m2 <- bagging(
   formula = quality ~ .,
   data    = v_train,
-  coob    = TRUE,
-  nbagg   = ntree[i]
+  coob    = TRUE
 )
 
 # get OOB error
