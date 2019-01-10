@@ -470,22 +470,16 @@ Descobertas:
 Eliminando variáveis não significativas
 ```{r}
 stepwise <- step(x,direction="both")
-y <- lm(quality ~ fixedacidity + volatileacidity + residualsugar + freesulfurdioxide + density + pH + sulphates, data=dataTreino)
+y <- lm(quality ~ fixedacidity + volatileacidity + residualsugar + freesulfurdioxide + density + pH + sulphates + alcohol, data=dataTreino)
 
 summary(y)  
 ```
 Descobertas:
 - Identificamos que o `p-value` é menor que 5% então podemos rejeitar a hipótese nula
-- Outro fator é que o `Rsquared` é de 29, o que significa que a regressão linear não descreve o modelo com tanta precisão
+- Outro fator é que o `R-squared` é de 30, o que significa que a regressão linear não descreve o modelo com tanta precisão
 
-
-  - explicar a técnica
-  - qual a variável dependente, 
-  - quais são as variáveis independentes,
-  - relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
-  - saída do modelo (análise)
-  - qualidade do modelo
-  - O que cada modelo gerou de resultados?
+Conclusão:
+- O modelo criado através da técnica de regressão linear não descreve muito bem a nota de qualidade dos vinhos, com uma acertividade de aproximadamente 30%
 
 ## Etapa 2 - Árvore de regressão
 
