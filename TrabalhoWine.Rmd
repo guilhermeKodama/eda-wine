@@ -11,6 +11,12 @@ install.packages("plotly")
 install.packages("dplyr")
 install.packages("corrgram")
 install.packages("outliers")
+install.packages ("caTools")
+install.packages("rpart")
+install.packages("rpart.plot")
+install.packages("ipred")
+install.packages("caret")
+install.packages("AmesHousing")
 ```
 
 # EDA Dataset Qualidade de Vinhos
@@ -66,6 +72,13 @@ require(plotly)
 require(dplyr)
 require(corrgram)
 require(outliers)
+require(caTools)     # data splitting
+require(dplyr)       # data wrangling
+require(rpart)       # performing regression trees
+require(rpart.plot)  # plotting regression trees
+require(ipred)       # bagging
+require(caret)       # bagging
+require(AmesHousing)
 
 Vinhos <- read.csv2("BaseWine_Red_e_White2018.csv", row.names=1)
 attach(Vinhos)
@@ -491,19 +504,97 @@ A técnica para aplicar árvores de decisões em problemas de regressão começa
 Uma vez que essa estrutura é montado o algoritmo utliza a média da região no qual a observação se encontra para fazer uma previsão.
 As árvores de decisão tendem ao `overfitting` então é necessário fazer um fine tunning com alguns hyperparametros para ajusta-las, como por exemplo o numero máximo de galhos em um nó e o numero mínimo de observações que uma folha pode conter.
 
+"Basic regression trees partition a data set into smaller subgroups and then fit a simple constant for each observation in the subgroup. The partitioning is achieved by successive binary partitions (aka recursive partitioning) based on the different predictors. The constant to predict is based on the average response values for all observations that fall in that subgroup."
+
+### Dataset sem mod
+
 ```{r}
-library(rpart)
-fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
-fit2 <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis,
-              parms = list(prior = c(.65,.35), split = "information"))
-fit3 <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis,
-              control = rpart.control(cp = 0.05))
-par(mfrow = c(1,2), xpd = NA) # otherwise on some devices the text is clipped
-plot(fit)
-text(fit, use.n = TRUE)
-plot(fit2)
-text(fit2, use.n = TRUE)
+v <- Vinhos %>% select(c(fixedacidity,volatileacidity,citricacid,residualsugar,
+chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,sulphates,alcohol))
+
+set.seed(123)
+sample <- sample.split(Vinhos$quality, SplitRatio = .70)
+v_train <- subset(Vinhos, sample == TRUE)
+v_test  <- subset(Vinhos, sample == FALSE)
+
+# Árvore de regressão sem fine tuning
+m1 <- rpart(
+  formula = quality ~ .,
+  data    = v_train,
+  method  = "anova"
+  )
+
+pred1 <- predict(m, newdata = v_test)
+RMSE(pred = pred1, obs = v_test$quality)
 ```
+
+```{r}
+rpart.plot(m1)
+```
+
+```{r}
+plotcp(m1)
+```
+
+Bagging
+
+```{r}
+set.seed(123)
+# Árvore de regressão usando bagging
+m2 <- bagging(
+  formula = quality ~ .,
+  data    = v_train,
+  coob    = TRUE,
+  nbagg   = ntree[i]
+)
+
+# get OOB error
+m2$err
+```
+
+```{r}
+# predicion error
+pred2 <- predict(m2, newdata = v_test)
+RMSE(pred = pred2, obs = v_test$quality)
+```
+
+Árvore de regressão usando bagging e 10-fold cross validation
+
+```{r}
+set.seed(123)
+# Specify 10-fold cross validation
+ctrl <- trainControl(method = "cv",  number = 10) 
+
+# CV bagged model
+m3 <- train(
+  quality ~ .,
+  data = v_train,
+  method = "treebag",
+  trControl = ctrl,
+  importance = TRUE
+)
+
+# assess results
+m3
+```
+
+```{r}
+pred3 <- predict(m3, newdata = v_test)
+RMSE(pred = pred3, obs = v_test$quality)
+```
+
+plot most important variables
+
+```{r}
+plot(varImp(m3), 20)
+```
+
+### Dataset sem outliers
+
+### Dataset sem outlier e só WHITE
+
+### Dataset sem outlier e só RED
+
 
   - explicar a técnica
   - qual a variável dependente, 
