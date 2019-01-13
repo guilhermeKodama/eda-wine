@@ -510,13 +510,55 @@ utilizando as métricas adequadas para comparação de modelos façam um resumo 
 
 ## Etapa 3 - Regressão Logística
 
-  - explicar a técnica
-  - qual a variável dependente, 
-  - quais são as variáveis independentes,
-  - relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
-  - saída do modelo (análise)
-  - qualidade do modelo
-  - O que cada modelo gerou de resultados?
+
+Para gerar um modelo de regressão logística, primeiro devemos categorizar a variável target "quality"
+Definimos uma nova variável categórica (qualidade) com notas iguais ou acima de 7 sendo um vinho bom (1), e abaixo sendo ruim (0)
+```{r}
+notaCorte = 7
+rldataTreino <- dataTreino
+rldataTeste <- dataTeste
+attach(rldataTreino)
+rldataTreino$qualidade <- ifelse(rldataTreino$quality >= notaCorte, 1,ifelse(rldataTreino$quality < notaCorte, 0,0))
+rldataTeste$qualidade <- ifelse(rldataTeste$quality >= notaCorte, 1,ifelse(rldataTeste$quality < notaCorte, 0,0))
+```
+
+
+Realizando a regressão logística com todas as variáveis
+```{r}
+x <- glm(qualidade~fixedacidity+volatileacidity+citricacid+residualsugar+chlorides+freesulfurdioxide+totalsulfurdioxide+density+pH+sulphates+alcohol, data=rldataTreino)
+```
+Analisando o summary
+```{r}
+summary(x)
+```
+Descobertas:
+- Algumas variáveis estão sendo consideradas, mas possuem baixo nível de significância para o modelo, portanto podemos descartá-las
+
+
+Descartando variáveis não significativas
+```{r}
+stepwise <- step(x,direction="both")
+y <- lm(qualidade ~ fixedacidity + volatileacidity + residualsugar + freesulfurdioxide + density + pH + sulphates, data=rldataTreino, family = "binomial")
+
+summary(y)  
+```
+
+
+Validando o ajuste do modelo
+```{r}
+z <- predict(y, newdata=rldataTeste, type='response')
+z <- ifelse(z > 0.5,1,0)
+erro <- mean(z != rldataTeste$qualidade)
+print(paste('Acurácia',1-erro))
+```
+
+Descobertas:
+- Executamos o predict da base de treino versus a base de teste, e descobrimos que o modelo gerado está com um índice de acertividade de aproximadamente 81%
+
+Conclusão:
+- O modelo criado através de regressão logística multivariada em família binomial, é adequado para classificar os vinhos brancos bons, com notas iguais ou acima de 7, de acordo com a base de dados fornecida.
+
+
   
 ## Etapa 3 - Comparação dos modelos
 
