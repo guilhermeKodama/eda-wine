@@ -572,6 +572,69 @@ Utilizando as métricas adequadas para comparação de modelos façam um resumo 
 quais outras técnicas supervisionadas vocês indicariam como adequadas para esta análise?
 
 ## Etapa 4 - Técnicas não supervisionadas
+Como técnica não supervisionada, vamos testar se o algoritmo de clusterização será adequado para agrupar dois conjunto de vinhos, categorizando-os como vinhos bons e vinhos ruins.
+A variável 'quality', que identifica a nota do vinho, será a variável utilizada para correlacionar com as demais variáveis para identificar se existe algum agrupamento entre os vinhos. 
 
-e, das técnicas Não Supervisionadas, quais?
+- Plotandos as relações das variáveis dos vinhos brancos:
+```{r}
+plot(vw)
+```
+- Clusterizando as variáveis:
 
+Abaixo está sendo criada uma função para testar a variância dos dados em relação ao número de clusters:
+```{r}  
+elbow <- function(dataset){
+  wss <- numeric(15)
+  for (i in 1:15)
+    wss[i] <- sum(kmeans(dataset,centers=i,
+                         nstart=100)$withinss)
+  plot(1:15, wss, type="b", main="Elbow method",
+       xlab="Number of Clusters",
+       ylab="Within groups sum of squares",
+       pch=8, col="red")
+}
+
+elbow(vw)
+```
+
+- Observações: 
+Conforme é possível identificar, o plot está mostrando que para o dataset 'vw', o mais recomendado é utilizar 2 clusters.
+
+- Criando um cluster em 2 grupos para distinguir vinhos bons de vinhos ruins:
+```{r}    
+#Cluster WHITE:
+set.seed(10) 
+modelo_white = kmeans(vw, centers = 2)
+plot(vw, col=modelo_white$cluster)
+points(modelo_white$centers, col = 4:1, bg = 1:4, pch = 24, cex=1, lwd=1)
+```
+
+- Observações sobre o plot:
+Analisando as relações, é possível identificar que as variáveis que o cluster conseguiu agrupar melhor em dois grupos foram as variáveis 'totalsulfurdioxide' e 'freesulfurdioxide' em relação a variável 'quality'.
+
+- Analisando as variáveis  'totalsulfurdioxide' e 'freesulfurdioxide' separadamente:
+```{r}
+vw%>%
+  select(totalsulfurdioxide, freesulfurdioxide, quality) -> vinhos_white.r2
+plot(vinhos_white.r2)
+```
+- Clusterizando as variáveis:
+```{r}
+set.seed(10) 
+modelo_vinhos_white.r2 = kmeans(vinhos_white.r2, 
+                                centers = 2) #utilizando 2 clusters
+plot(vinhos_white.r2,
+     col=modelo_vinhos_white.r2$cluster)
+points(modelo_vinhos_white.r2$centers, col = 4:1, bg = 1:4, pch = 24, cex=1, lwd=1)
+```
+- Analisando o agrupamento, pode-se identificar que o cluster separou os vinhos em 2 grupos onde:
+
+'totalsulfurdioxide' e 'quality':
+ No grupo vermelho, ficaram os vinhos com 'totalsulfurdioxide' em média abaixo de 150 e os pretos acima de 150.
+ 'freesulfurdioxide' e 'quality':
+No grupo vermelho, ficaram os vinhos com 'freesulfurdioxide' em média abaixo de 50 e os pretos acima de 50. Sendo que os grupos se juntão um pouco.
+O grupo formado em 'totalsulfurdioxide' segue um agrupamento mais forte do que a variável 'freesulfurdioxide'. 
+
+- Conclusão sobre a técnica:
+O algoritmo de cluster não é uma técnica muito adequada para agrupar os vinhos em categorias de vinhos bons e ruins. 
+O agrupamento realizado pelo algoritmo não classifica com muita precisão os vinhos de acordo com a variável 'quality'. Podemos identificar que o grupo está distribuido em todas as notas de vinhos. Na nota 8, o grupo vermelho está em maior quantidade do que os pretos, na nota 3 para a variável 'freesulfurdioxide', o grupo preto está em maior quantidade em relação ao grupo vermelho.
