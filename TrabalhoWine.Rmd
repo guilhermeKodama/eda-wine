@@ -500,13 +500,13 @@ Descobertas:
 
 ## Etapa 2 - Árvore de regressão
 
-A técnica para aplicar árvores de decisões em problemas de regressão começa tentando dividir os dados em regiões, em cada iteração e para cada variável o algoritmo tenta achar o ponto ótimo `s` que divide as regiões na qual minimize o somatório quadrático dos erros de cada região. Essa técnica é realizada através de algoritmo gulosos e é conhecida como `recursive binary splitting`.
-Uma vez que essa estrutura é montado o algoritmo utliza a média da região no qual a observação se encontra para fazer uma previsão.
+Basicamente a árvore de regressão particiona o dataset em subgrupos menores e então estabelece um constante simples para cada observação daquele subgrupo. O particionamento é alcançado através de sucessivas partições binárias, também conhecido como particionamento binário recursivo, baseado nas diferentes características. A constante a ser prevista é baseado na média da resposta dos valores de todas as observações que caem naquele subgrupo.
+
 As árvores de decisão tendem ao `overfitting` então é necessário fazer um fine tunning com alguns hyperparametros para ajusta-las, como por exemplo o numero máximo de galhos em um nó e o numero mínimo de observações que uma folha pode conter.
 
-"Basic regression trees partition a data set into smaller subgroups and then fit a simple constant for each observation in the subgroup. The partitioning is achieved by successive binary partitions (aka recursive partitioning) based on the different predictors. The constant to predict is based on the average response values for all observations that fall in that subgroup."
+A variável target é a `quality` e as variáveis que utilizaremos para prever o seu valor são: `fixedacidity`, `volatileacidity`, `citricacid`, `residualsugar`, `chlorides`, `freesulfurdioxide`, `totalsulfurdioxide`, `density`, `pH`,`sulphates`,`alcohol`.
 
-### Dataset sem mod
+### Etapa 2 - Árvore de regressão - Dataset sem modificações
 
 ```{r}
 v <- Vinhos %>% select(c(fixedacidity,volatileacidity,citricacid,residualsugar,
@@ -588,20 +588,300 @@ plot most important variables
 plot(varImp(m3), 20)
 ```
 
-### Dataset sem outliers
+### Etapa 2 - Árvore de regressão -  Dataset sem outliers
+```{r}
+v <- Vinhos %>% select(c(fixedacidity,volatileacidity,citricacid,residualsugar,
+chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,sulphates,alcohol))
 
-### Dataset sem outlier e só WHITE
+v <- rm.outlier(v, fill = T, median = T, opposite = FALSE)
 
-### Dataset sem outlier e só RED
+v %>% mutate(quality = quality) -> v
 
+v
+```
 
-  - explicar a técnica
-  - qual a variável dependente, 
-  - quais são as variáveis independentes,
-  - relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
-  - saída do modelo (análise)
-  - qualidade do modelo
-  - O que cada modelo gerou de resultados?
+```{r}
+set.seed(123)
+sample <- sample.split(v$quality, SplitRatio = .70)
+v_train <- subset(v, sample == TRUE)
+v_test  <- subset(v, sample == FALSE)
+
+# Árvore de regressão sem fine tuning
+m1 <- rpart(
+  formula = quality ~ .,
+  data    = v_train,
+  method  = "anova"
+  )
+
+pred1 <- predict(m1, newdata = v_test)
+RMSE(pred = pred1, obs = v_test$quality)
+```
+
+- melhorou um pouco tirando os outliers
+
+```{r}
+rpart.plot(m1)
+```
+
+```{r}
+plotcp(m1)
+```
+
+Bagging
+
+```{r}
+set.seed(123)
+# Árvore de regressão usando bagging
+m2 <- bagging(
+  formula = quality ~ .,
+  data    = v_train,
+  coob    = TRUE
+)
+
+# get OOB error
+m2$err
+```
+
+```{r}
+# predicion error
+pred2 <- predict(m2, newdata = v_test)
+RMSE(pred = pred2, obs = v_test$quality)
+```
+
+Árvore de regressão usando bagging e 10-fold cross validation
+
+```{r}
+set.seed(123)
+# Specify 10-fold cross validation
+ctrl <- trainControl(method = "cv",  number = 10) 
+
+# CV bagged model
+m3 <- train(
+  quality ~ .,
+  data = v_train,
+  method = "treebag",
+  trControl = ctrl,
+  importance = TRUE
+)
+
+# assess results
+m3
+```
+
+```{r}
+pred3 <- predict(m3, newdata = v_test)
+RMSE(pred = pred3, obs = v_test$quality)
+```
+
+```{r}
+plot(varImp(m3), 20)
+```
+
+### Etapa 2 - Árvore de regressão -  Dataset sem outliers e apenas vinhos do tipo WHITE
+
+```{r}
+v <- Vinhos %>% 
+  filter(Vinho == 'WHITE') %>%
+  select(c(fixedacidity,volatileacidity,citricacid,residualsugar,
+chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,sulphates,alcohol))
+
+v <- rm.outlier(v, fill = T, median = T, opposite = FALSE)
+
+whiteQuality <- Vinhos %>%
+  filter(Vinho == 'WHITE') %>%
+  select(c(quality))
+
+v %>% mutate(quality = whiteQuality$quality ) -> v
+
+v
+```
+
+```{r}
+set.seed(123)
+sample <- sample.split(v$quality, SplitRatio = .70)
+v_train <- subset(v, sample == TRUE)
+v_test  <- subset(v, sample == FALSE)
+
+# Árvore de regressão sem fine tuning
+m1 <- rpart(
+  formula = quality ~ .,
+  data    = v_train,
+  method  = "anova"
+  )
+
+pred1 <- predict(m1, newdata = v_test)
+RMSE(pred = pred1, obs = v_test$quality)
+```
+
+```{r}
+rpart.plot(m1)
+```
+
+```{r}
+plotcp(m1)
+```
+
+Bagging
+
+```{r}
+set.seed(123)
+# Árvore de regressão usando bagging
+m2 <- bagging(
+  formula = quality ~ .,
+  data    = v_train,
+  coob    = TRUE
+)
+
+# get OOB error
+m2$err
+```
+
+```{r}
+# predicion error
+pred2 <- predict(m2, newdata = v_test)
+RMSE(pred = pred2, obs = v_test$quality)
+```
+
+Árvore de regressão usando bagging e 10-fold cross validation
+
+```{r}
+set.seed(123)
+# Specify 10-fold cross validation
+ctrl <- trainControl(method = "cv",  number = 10) 
+
+# CV bagged model
+m3 <- train(
+  quality ~ .,
+  data = v_train,
+  method = "treebag",
+  trControl = ctrl,
+  importance = TRUE
+)
+
+# assess results
+m3
+```
+
+```{r}
+pred3 <- predict(m3, newdata = v_test)
+RMSE(pred = pred3, obs = v_test$quality)
+```
+
+```{r}
+plot(varImp(m3), 20)
+```
+
+### Etapa 2 - Árvore de regressão -  Dataset sem outliers e apenas vinhos do tipo RED
+
+```{r}
+v <- Vinhos %>% 
+  filter(Vinho == 'RED') %>%
+  select(c(fixedacidity,volatileacidity,citricacid,residualsugar,
+chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,sulphates,alcohol))
+
+v <- rm.outlier(v, fill = T, median = T, opposite = FALSE)
+
+redQuality <- Vinhos %>%
+  filter(Vinho == 'RED') %>%
+  select(c(quality))
+
+v %>% mutate(quality = redQuality$quality ) -> v
+
+v
+```
+
+```{r}
+set.seed(123)
+sample <- sample.split(v$quality, SplitRatio = .70)
+v_train <- subset(v, sample == TRUE)
+v_test  <- subset(v, sample == FALSE)
+
+# Árvore de regressão sem fine tuning
+m1 <- rpart(
+  formula = quality ~ .,
+  data    = v_train,
+  method  = "anova"
+  )
+
+pred1 <- predict(m1, newdata = v_test)
+RMSE(pred = pred1, obs = v_test$quality)
+```
+
+```{r}
+rpart.plot(m1)
+```
+
+```{r}
+plotcp(m1)
+```
+
+Bagging
+
+```{r}
+set.seed(123)
+# Árvore de regressão usando bagging
+m2 <- bagging(
+  formula = quality ~ .,
+  data    = v_train,
+  coob    = TRUE
+)
+
+# get OOB error
+m2$err
+```
+
+```{r}
+# predicion error
+pred2 <- predict(m2, newdata = v_test)
+RMSE(pred = pred2, obs = v_test$quality)
+```
+
+Árvore de regressão usando bagging e 10-fold cross validation
+
+```{r}
+set.seed(123)
+# Specify 10-fold cross validation
+ctrl <- trainControl(method = "cv",  number = 10) 
+
+# CV bagged model
+m3 <- train(
+  quality ~ .,
+  data = v_train,
+  method = "treebag",
+  trControl = ctrl,
+  importance = TRUE
+)
+
+# assess results
+m3
+```
+
+```{r}
+pred3 <- predict(m3, newdata = v_test)
+RMSE(pred = pred3, obs = v_test$quality)
+```
+
+```{r}
+plot(varImp(m3), 20)
+```
+
+### Etapa 2 - Árvore de regressão -  Resumo dos resultados finais
+
+```{r}
+x <- data.frame(
+  "sem fine tuning" = c(0.7624472, 0.7607358, 0.7724475, 0.6611792), 
+  "bagging" = c(0.7389704,0.73926, 0.7523468, 0.6350595), 
+  "bagging 10k fold cross validation" = c(0.7412857, 0.7415393, 0.7534588, 0.6412619)
+  )
+rownames(x) <- c("Sem Modificação", "Sem outliers", "Apenas com WHITE", "Apenas com RED")
+x
+```
+
+Descobertas: 
+- A tirada dos outliers não representou uma melhoria signficativa na performance do modelo
+- Utilizar técnicas de bagging (combinação de vários modelos) ajudour de forma significativa na performance do modelo e no controle do overfitting
+- Treinar um modelo específico para prever `RED` parece trazer resultados melhores, conseguimos perceber que existe diferentes notáveis entre os dois tipos e que as variáveis relevantes para explicar `RED` são diferentes para `WHITE`.
+- Um modelo treinado exclusivamente para `WHITE` acabou gerando um resultado pior do que treinar um modelo para o dataset inteiro.
 
 ## Etapa 2 - Comparação entre modelos
 
