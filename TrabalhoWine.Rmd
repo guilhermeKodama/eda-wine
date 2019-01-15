@@ -16,7 +16,7 @@ install.packages("rpart")
 install.packages("rpart.plot")
 install.packages("ipred")
 install.packages("caret")
-install.packages("AmesHousing")
+install.packages("pROC")
 ```
 
 # EDA Dataset Qualidade de Vinhos
@@ -78,7 +78,7 @@ require(rpart)       # performing regression trees
 require(rpart.plot)  # plotting regression trees
 require(ipred)       # bagging
 require(caret)       # bagging
-require(AmesHousing)
+require(pROC)
 
 Vinhos <- read.csv2("BaseWine_Red_e_White2018.csv", row.names=1)
 attach(Vinhos)
@@ -487,6 +487,12 @@ y <- lm(quality ~ fixedacidity + volatileacidity + residualsugar + freesulfurdio
 
 summary(y)  
 ```
+
+```{r}
+pred1 <- predict(y, newdata = dataTeste)
+RMSE(pred = pred1, obs = dataTeste$quality)
+```
+
 Descobertas:
 - Identificamos que o `p-value` é menor que 5% então podemos rejeitar a hipótese nula
 - Outro fator é que o `R-squared` é de 30, o que significa que a regressão linear não descreve o modelo com tanta precisão
@@ -882,19 +888,210 @@ Descobertas:
 
 ## Etapa 2 - Comparação entre modelos
 
-utilizando as métricas adequadas para comparação de modelos façam um resumo sobre a qualidade dos modelos e indiquem qual o modelo/ técnica que vocês recomendariam
+Identificamos que as técnicas de árvore de regressão se sairam melhor descrevendo esse dataset.
 
 ## Etapa 3 - Classificação com variável Quality: Vinhos bons e ruins
 
 ## Etapa 3 - Árvore de decisão
 
-  - explicar a técnica
-  - qual a variável dependente, 
-  - quais são as variáveis independentes,
-  - relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
-  - saída do modelo (análise)
-  - qualidade do modelo
-  - O que cada modelo gerou de resultados?
+
+```{r}
+v <- Vinhos %>%
+  mutate(aboveAverage = quality >= 7.0 )
+
+v$aboveAverage <- as.factor(v$aboveAverage)
+
+v <- v %>% select(c(fixedacidity,volatileacidity,citricacid,residualsugar,
+chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,sulphates,alcohol, aboveAverage))
+
+set.seed(123)
+sample <- sample.split(v$aboveAverage, SplitRatio = .70)
+v_train <- subset(v, sample == TRUE)
+v_test  <- subset(v, sample == FALSE)
+
+# Árvore de regressão sem fine tuning
+model.tree <- rpart(
+  formula = aboveAverage ~ .,
+  data    = v_train
+  )
+
+pred.tree <- predict(model.tree, v_test, type = 'class')
+xlab <- table(actualclass=v_test$aboveAverage,predictedclass=pred.tree)
+confusionMatrix(xlab)
+```
+
+```{r}
+#Obtendo probabilidades da base de test
+probs.tree <- predict(model.tree, newdata=v_test, type="prob")
+
+#Calculando curva ROC
+rocCurve.tree <- roc(v_test$aboveAverage, probs.tree[,"TRUE"])
+
+#plot curva ROC
+plot(rocCurve.tree, col=c(3))
+```
+
+```{r}
+#calculando a area abaixo da curva (quanto maior melhor)
+auc(rocCurve.tree)
+```
+
+Bagging
+```{r}
+set.seed(123)
+# Árvore de regressão usando bagging
+model.bagging <- bagging(
+  formula = aboveAverage ~ .,
+  data    = v_train,
+  coob    = TRUE
+)
+
+pred.bagging <- predict(model.bagging, v_test, type = 'class')
+xlab <- table(actualclass=v_test$aboveAverage,predictedclass=pred.bagging)
+confusionMatrix(xlab)
+
+```
+
+```{r}
+#Obtendo probabilidades da base de test
+probs.bagging <- predict(model.bagging, newdata=v_test, type="prob")
+
+#Calculando curva ROC
+rocCurve.bagging <- roc(v_test$aboveAverage, probs.bagging[,"TRUE"])
+
+#plot curva ROC
+plot(rocCurve.bagging, col=c(3))
+```
+
+```{r}
+#calculando a area abaixo da curva (quanto maior melhor)
+auc(rocCurve.bagging)
+```
+
+Bagging e 10-fold cross validation
+
+```{r}
+set.seed(123)
+# Specify 10-fold cross validation
+ctrl <- trainControl(method = "repeatedcv",  number = 10, allowParallel=TRUE) 
+
+# CV bagged model
+model.treebag <- train(
+  as.factor(aboveAverage) ~ .,
+  data = v_train,
+  method = "treebag",
+  trControl = ctrl,
+  importance=TRUE
+)
+
+# assess results
+pred.treebag <- predict(model.treebag, v_test, type = 'raw')
+xlab <- table(actualclass=v_test$aboveAverage,predictedclass=pred.treebag)
+confusionMatrix(xlab)
+```
+
+```{r}
+#Obtendo probabilidades da base de test
+probs.treebag <- predict(model.treebag, newdata=v_test, type="prob")
+
+#Calculando curva ROC
+rocCurve.treebag <- roc(v_test$aboveAverage, probs.treebag[,"TRUE"])
+
+#plot curva ROC
+plot(rocCurve.treebag, col=c(3))
+```
+
+```{r}
+#calculando a area abaixo da curva (quanto maior melhor)
+auc(rocCurve.treebag)
+```
+
+Random Forest
+```{r}
+set.seed(123)
+# Specify 10-fold cross validation
+ctrl <- trainControl(method = "repeatedcv",  number = 10, allowParallel=TRUE) 
+
+# CV bagged model
+model.rf <- train(
+  as.factor(aboveAverage) ~ .,
+  data = v_train,
+  method = "rf",
+  trControl = ctrl,
+  importance=TRUE
+)
+
+# assess results
+pred.rf <- predict(model.rf, v_test, type = 'raw')
+xlab <- table(actualclass=v_test$aboveAverage,predictedclass=pred.rf)
+confusionMatrix(xlab)
+```
+
+```{r}
+#Obtendo probabilidades da base de test
+probs.rf <- predict(model.rf, newdata=v_test, type="prob")
+
+#Calculando curva ROC
+rocCurve.rf <- roc(v_test$aboveAverage, probs.rf[,"TRUE"])
+
+#plot curva ROC
+plot(rocCurve.rf, col=c(3))
+```
+
+```{r}
+#calculando a area abaixo da curva (quanto maior melhor)
+auc(rocCurve.rf)
+```
+
+Random Forest with boosting
+
+```{r}
+set.seed(123)
+# Specify 10-fold cross validation
+ctrl <- trainControl(method = "repeatedcv",  number = 10, allowParallel=TRUE) 
+
+# CV bagged model
+model.gbm <- train(
+  as.factor(aboveAverage) ~ .,
+  data = v_train,
+  verbose=F,
+  method = "gbm",
+  trControl = ctrl
+)
+
+# assess results
+pred.gbm <- predict(model.gbm, v_test, type = 'raw')
+xlab <- table(actualclass=v_test$aboveAverage,predictedclass=pred.gbm)
+confusionMatrix(xlab)
+```
+
+```{r}
+#Obtendo probabilidades da base de test
+probs.gbm <- predict(model.gbm, newdata=v_test, type="prob")
+
+#Calculando curva ROC
+rocCurve.gbm <- roc(v_test$aboveAverage, probs.gbm[,"TRUE"])
+
+#plot curva ROC
+plot(rocCurve.gbm, col=c(3))
+```
+
+```{r}
+#calculando a area abaixo da curva (quanto maior melhor)
+auc(rocCurve.gbm)
+```
+
+Analisando todas as curvas ROC dos modelos gerados
+```{r}
+plot(rocCurve.tree,col=c(4)) # color blue is simple tree
+plot(rocCurve.bagging ,add=TRUE,col=c(6)) # color magenta is bagging
+plot(rocCurve.treebag ,add=TRUE,col=c(2)) # color red is treebag
+plot(rocCurve.rf,add=TRUE,col=c(1)) # color black is rf
+plot(rocCurve.gbm,add=TRUE,col=c(3)) # color green is gbm
+```
+
+Descobertas:
+- O RandomForest foi o melhor modelo entre todas as técnicas de árvores de decisão testadas, mostrando a melhor curva ROC o que indica que o modelo tem um boa generalização e a maior taxa de acurácia. Acurácia `0.8866`, área sob a curva ROC `0.9067`
 
 ## Etapa 3 - Regressão Logística
 
@@ -950,8 +1147,7 @@ Conclusão:
   
 ## Etapa 3 - Comparação dos modelos
 
-Utilizando as métricas adequadas para comparação de modelos façam um resumo sobre a qualidade dos modelos e indiquem qual o modelo/ técnica que vocês
-  recomendariam
+Baseado nas métricas de acurácia e área sob a curva ROC podemos chegar a conclusão que a técnica Random Forest (árvore de decisão) obteve melhores resultados nesse dataset.
 
 ## Etapa 4 - Análise sobre outras possíveis técnicas
 
