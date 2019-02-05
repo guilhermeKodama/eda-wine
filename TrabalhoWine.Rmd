@@ -7,16 +7,6 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-install.packages("plotly")
-install.packages("dplyr")
-install.packages("corrgram")
-install.packages("outliers")
-install.packages ("caTools")
-install.packages("rpart")
-install.packages("rpart.plot")
-install.packages("ipred")
-install.packages("caret")
-install.packages("pROC")
 ```
 
 # EDA Dataset Qualidade de Vinhos
@@ -26,48 +16,52 @@ Utilizando a base descrita e disponibilizada em aula o objetivo do trabalho é m
 ## Objetivos
 
 Etapa 1 (Base)
-- Avaliar se a análise será feita com os dois tipos de vinhos juntos ou se separaria por tipo para analisá-los.
-- Análise exploratória de dados: Detecção de outliers, gráficos e análise sobre os dois tipos de vinhos. Correlações entre elas (numéricas e gráficos).
-- Conclusão: colocar qual a opção seguirá sobre os tipos de vinhos , sobre os outliers (caso tenha) e o uso de Componentes Principais
+
+* Avaliar se a análise será feita com os dois tipos de vinhos juntos ou se separaria por tipo para analisá-los.
+* Análise exploratória de dados: Detecção de outliers, gráficos e análise sobre os dois tipos de vinhos. Correlações entre elas (numéricas e gráficos).
+* Conclusão: colocar qual a opção seguirá sobre os tipos de vinhos , sobre os outliers (caso tenha) e o uso de Componentes Principais
 
 Etapa 2 (Algoritmos explicar variável `Quality`)
-- Modelo 1: Regressão Linear
-- Modelo 2: Árvore de regressão
-- Para cada modelo fazer as análises adequadas como: 
-  - explicar a técnica
-  - qual a variável dependente, 
-  - quais são as variáveis independentes,
-  - relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
-  - saída do modelo (análise)
-  - qualidade do modelo
-  - O que cada modelo gerou de resultados?
-- Comparação entre modelos
-  - Utilizando as métricas adequadas para comparação de modelos façam um resumo sobre a qualidade dos modelos e indiquem qual o modelo/ técnica que vocês
+
+* Modelo 1: Regressão Linear
+* Modelo 2: Árvore de regressão
+* Para cada modelo fazer as análises adequadas como: 
+  + explicar a técnica
+  + qual a variável dependente, 
+  + quais são as variáveis independentes,
+  + relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
+  + saída do modelo (análise)
+  + qualidade do modelo
+  + O que cada modelo gerou de resultados?
+* Comparação entre modelos
+  + Utilizando as métricas adequadas para comparação de modelos façam um resumo sobre a qualidade dos modelos e indiquem qual o modelo/ técnica que vocês
   recomendariam
 
 Etapa 3 (Algoritmos explicar variável "Quality": Vinhos bons e ruins)
-- Modelo 1: Árvore de decisão
-- Modelo 2: Regressão Logística
-- Para cada modelo fazer as análises adequeadas como:
-  - explicar a técnica
-  - qual a variável dependente, 
-  - quais são as variáveis independentes,
-  - relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
-  - saída do modelo (análise)
-  - qualidade do modelo
-  - O que cada modelo gerou de resultados?
-- Comparação dos modelos
-  - Utilizando as métricas adequadas para comparação de modelos façam um resumo sobre a qualidade dos modelos e indiquem qual o modelo/ técnica que vocês
+
+* Modelo 1: Árvore de decisão
+* Modelo 2: Regressão Logística
+* Para cada modelo fazer as análises adequeadas como:
+  + explicar a técnica
+  + qual a variável dependente, 
+  + quais são as variáveis independentes,
+  + relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
+  + saída do modelo (análise)
+  + qualidade do modelo
+  + O que cada modelo gerou de resultados?
+* Comparação dos modelos
+  + Utilizando as métricas adequadas para comparação de modelos façam um resumo sobre a qualidade dos modelos e indiquem qual o modelo/ técnica que vocês
   recomendariam
 
 Etapa 4 (Análise sobre outras possíveis técnicas)
-- quais outras técnicas supervisionadas vocês indicariam como adequadas para esta análise?
-- e, das técnicas Não Supervisionadas, quais?
 
+* quais outras técnicas supervisionadas vocês indicariam como adequadas para esta análise?
+* e, das técnicas Não Supervisionadas, quais?
 
 ## Etapa 1 - Análisa do dataset
 
 ```{r}
+require(DT)
 require(plotly)
 require(dplyr)
 require(corrgram)
@@ -82,7 +76,7 @@ require(pROC)
 
 Vinhos <- read.csv2("BaseWine_Red_e_White2018.csv", row.names=1)
 attach(Vinhos)
-Vinhos
+head(Vinhos)
 ```
 Temos um total de 13 colunas, com duas possíveis variáveis *targets* a variável `quality` e `Vinho`. A coluna `Vinho` já está corretamente indicada como sendo categórica, e podemos fazer a mesma coisa para `quality` mais pra frente se acharmos necessário.
 
@@ -188,10 +182,11 @@ subplot(p11, p12, nrows=1)
 ```
 
 Descobertas:
-- Temos algumas características que se destacam para descrever a diferença entre os dois tipos de vinhos: Fixed Acidity, Volatile Acidity, Chlorides, Free Sulfur Dioxide, Total Sulfur Dioxide, Density, Sulphates.
-- As discrepâncias que existem nessas características entre os tipos de vinhos seriam úteis em uma tarefa de classificação.
-- Podemos observar que só o tipo WHITE tem observações com nota 9, e há apenas 1 observação com essa nota. Isso significa que nunca vamos associar um vinho RED com essa nota o que indica que o nosso modelo provavelmente não generalizaria muito bem, precisariamos de dados mais completos.
-- Podemos observar possíveis outliers que precisam ser investigados. Ex: Alcohol, temos observações com quase 0% de alcohol, precisa ser verificar se é possível ter observações não alcolicas nessa amostra ou é um erro.
+
+* Temos algumas características que se destacam para descrever a diferença entre os dois tipos de vinhos: Fixed Acidity, Volatile Acidity, Chlorides, Free Sulfur Dioxide, Total Sulfur Dioxide, Density, Sulphates.
+* As discrepâncias que existem nessas características entre os tipos de vinhos seriam úteis em uma tarefa de classificação.
+* Podemos observar que só o tipo WHITE tem observações com nota 9, e há apenas 1 observação com essa nota. Isso significa que nunca vamos associar um vinho RED com essa nota o que indica que o nosso modelo provavelmente não generalizaria muito bem, precisariamos de dados mais completos.
+* Podemos observar possíveis outliers que precisam ser investigados. Ex: Alcohol, temos observações com quase 0% de alcohol, precisa ser verificar se é possível ter observações não alcolicas nessa amostra ou é um erro.
 
 ### Histogram
 
@@ -337,7 +332,8 @@ plot_hist(RED, "RED", WHITE, "WHITE", "alcohol", "Alcohol")
 ```
 
 Descobertas:
-- Podemos observar basicamente os mesmos destaques que algumas features apresentam entre os tipos de vinho RED vs WHITE que visualizamos no Box PLot.
+
+* Podemos observar basicamente os mesmos destaques que algumas features apresentam entre os tipos de vinho RED vs WHITE que visualizamos no Box PLot.
 
 ## Etapa 1 - Correlação entre as features
 
@@ -380,12 +376,13 @@ corrgram(matcorVR, type = "cor", lower.panel = panel.shade, upper.panel = panel.
 ```
 
 Descobertas:
-- Observamos que no dataset em geral `Alcohol` tem uma correlação positiva alta com `Quality`.
-- Densidade tem a maior correlação negativa com qualidade porém nada alarmante
-- `Dióxido de Enxofre Livre` e `Dióxido de Enxofre Total` tem uma grande correlação positiva e imagino que isso seja intuitivo, portanto podemos escolher apenas uma delas para usar no nosso modelo.
-- Outra variáveis como `Fixed Acidity`, `Density`, `Residual Sugar` tem grandes correlações positivas e negativas entre sí e podem ser analisadas para descarte caso necessário.
-- A correlação entre as variáveis dos vinhos `WHITE` e `RED` apresentam algumas divergências. 
-- Os vinhos do tipo `WHITE` apresentam correlações consistentes com a matriz do dataset total, e isso pode ser explicado pelo fato de haver mais observações desse tipo de vinho, enquanto as do tipo `RED` apresentam variáveis como `Volatile Acidity` com correlação negativa a `Quality` e `Citric Acid`, `Sulphates` com correlação positiva maior com `Quality`. `Fixed Acidity`, `Citric Acidity`, `Fixed Acidity`, `Density`, `PH`, `Volatile Acidity` apresentam grandes correlações entre si tanto positivas como negativas, e podem ser analisadas para utilização de apenas uma dentre os pares.
+
+* Observamos que no dataset em geral `Alcohol` tem uma correlação positiva alta com `Quality`.
+* Densidade tem a maior correlação negativa com qualidade porém nada alarmante
+* `Dióxido de Enxofre Livre` e `Dióxido de Enxofre Total` tem uma grande correlação positiva e imagino que isso seja intuitivo, portanto podemos escolher apenas uma delas para usar no nosso modelo.
+* Outra variáveis como `Fixed Acidity`, `Density`, `Residual Sugar` tem grandes correlações positivas e negativas entre sí e podem ser analisadas para descarte caso necessário.
+* A correlação entre as variáveis dos vinhos `WHITE` e `RED` apresentam algumas divergências. 
+* Os vinhos do tipo `WHITE` apresentam correlações consistentes com a matriz do dataset total, e isso pode ser explicado pelo fato de haver mais observações desse tipo de vinho, enquanto as do tipo `RED` apresentam variáveis como `Volatile Acidity` com correlação negativa a `Quality` e `Citric Acid`, `Sulphates` com correlação positiva maior com `Quality`. `Fixed Acidity`, `Citric Acidity`, `Fixed Acidity`, `Density`, `PH`, `Volatile Acidity` apresentam grandes correlações entre si tanto positivas como negativas, e podem ser analisadas para utilização de apenas uma dentre os pares.
 
 ## Etapa 1 -  PCA
 
@@ -409,8 +406,9 @@ biplot(prcomp(v, scale = TRUE))
 ```
 
 Descobertas:
-- A variação proporcional encontrada pelo PCA no seu melhor componente é muito baixa. PC1 explica cerca de 27% da variância total. Baseado nisso não teremos grandes vantagens em adicionar esses componetes ao modelo.
-- Podemos ver também basedo na `Rotation` que temos features com correlações muito fortes como: `freesulfurdioxide` e `totalsulfurdioxide`, também `fixedacidity` e `volatileacidity`, que já havíamos identificado em outras partes da análise e podem ser candidatas para utilizar apenas uma delas.
+
+* A variação proporcional encontrada pelo PCA no seu melhor componente é muito baixa. PC1 explica cerca de 27% da variância total. Baseado nisso não teremos grandes vantagens em adicionar esses componetes ao modelo.
+* Podemos ver também basedo na `Rotation` que temos features com correlações muito fortes como: `freesulfurdioxide` e `totalsulfurdioxide`, também `fixedacidity` e `volatileacidity`, que já havíamos identificado em outras partes da análise e podem ser candidatas para utilizar apenas uma delas.
 
 ## Etapa 1 - Outliers
 
@@ -423,8 +421,9 @@ vw <- rm.outlier(vw, fill = T, median = T, opposite = FALSE)
 ```
 
 Descobertas:
-- Como sabemos que os modelos de regressão são muito sensíveis a outliers nós iremos removê-los e preenchê-los com a mediana.
-- Decidimos por não remover a observação inteira para não prejudicar o número de observações totais de determinadas notas de qualidade.
+
+* Como sabemos que os modelos de regressão são muito sensíveis a outliers nós iremos removê-los e preenchê-los com a mediana.
+* Decidimos por não remover a observação inteira para não prejudicar o número de observações totais de determinadas notas de qualidade.
 
 ## Etapa 1 - Conclusão
 
@@ -477,7 +476,8 @@ Analisando o summary
 summary(x)
 ```
 Descobertas:
-- Algumas variáveis estão sendo consideradas, mas possuem baixo nível de significância, portanto podemos eliminá-las
+
+* Algumas variáveis estão sendo consideradas, mas possuem baixo nível de significância, portanto podemos eliminá-las
 
 
 Eliminando variáveis não significativas
@@ -494,12 +494,14 @@ RMSE(pred = pred1, obs = dataTeste$quality)
 ```
 
 Descobertas:
-- Identificamos que o `p-value` é menor que 5% então podemos rejeitar a hipótese nula
-- Outro fator é que o `R-squared` é de 30, o que significa que a regressão linear não descreve o modelo com tanta precisão
+
+* Identificamos que o `p-value` é menor que 5% então podemos rejeitar a hipótese nula
+* Outro fator é que o `R-squared` é de 30, o que significa que a regressão linear não descreve o modelo com tanta precisão
 
 Conclusão:
-- O modelo criado através da técnica de regressão linear não descreve muito bem a nota de qualidade dos vinhos, com uma acertividade de aproximadamente 30%
-- Não será necessário fazer o modelo de predição, devido ao baixo índice de acertividade
+
+* O modelo criado através da técnica de regressão linear não descreve muito bem a nota de qualidade dos vinhos, com uma acertividade de aproximadamente 30%
+* Não será necessário fazer o modelo de predição, devido ao baixo índice de acertividade
 
 ## Etapa 2 - Árvore de regressão
 
@@ -600,7 +602,7 @@ v <- rm.outlier(v, fill = T, median = T, opposite = FALSE)
 
 v %>% mutate(quality = quality) -> v
 
-v
+head(v)
 ```
 
 ```{r}
@@ -696,7 +698,7 @@ whiteQuality <- Vinhos %>%
 
 v %>% mutate(quality = whiteQuality$quality ) -> v
 
-v
+head(v)
 ```
 
 ```{r}
@@ -790,7 +792,7 @@ redQuality <- Vinhos %>%
 
 v %>% mutate(quality = redQuality$quality ) -> v
 
-v
+head(v)
 ```
 
 ```{r}
@@ -881,10 +883,11 @@ x
 ```
 
 Descobertas: 
-- A tirada dos outliers não representou uma melhoria signficativa na performance do modelo
-- Utilizar técnicas de bagging (combinação de vários modelos) ajudour de forma significativa na performance do modelo e no controle do overfitting
-- Treinar um modelo específico para prever `RED` parece trazer resultados melhores, conseguimos perceber que existe diferentes notáveis entre os dois tipos e que as variáveis relevantes para explicar `RED` são diferentes para `WHITE`.
-- Um modelo treinado exclusivamente para `WHITE` acabou gerando um resultado pior do que treinar um modelo para o dataset inteiro.
+
+* A tirada dos outliers não representou uma melhoria signficativa na performance do modelo
+* Utilizar técnicas de bagging (combinação de vários modelos) ajudour de forma significativa na performance do modelo e no controle do overfitting
+* Treinar um modelo específico para prever `RED` parece trazer resultados melhores, conseguimos perceber que existe diferentes notáveis entre os dois tipos e que as variáveis relevantes para explicar `RED` são diferentes para `WHITE`.
+* Um modelo treinado exclusivamente para `WHITE` acabou gerando um resultado pior do que treinar um modelo para o dataset inteiro.
 
 ## Etapa 2 - Comparação entre modelos
 
@@ -1091,7 +1094,8 @@ plot(rocCurve.gbm,add=TRUE,col=c(3)) # color green is gbm
 ```
 
 Descobertas:
-- O RandomForest foi o melhor modelo entre todas as técnicas de árvores de decisão testadas, mostrando a melhor curva ROC o que indica que o modelo tem um boa generalização e a maior taxa de acurácia. Acurácia `0.8866`, área sob a curva ROC `0.9067`
+
+* O RandomForest foi o melhor modelo entre todas as técnicas de árvores de decisão testadas, mostrando a melhor curva ROC o que indica que o modelo tem um boa generalização e a maior taxa de acurácia. Acurácia `0.8866`, área sob a curva ROC `0.9067`
 
 ## Etapa 3 - Regressão Logística
 
@@ -1117,7 +1121,8 @@ Analisando o summary
 summary(x)
 ```
 Descobertas:
-- Algumas variáveis estão sendo consideradas, mas possuem baixo nível de significância para o modelo, portanto podemos descartá-las
+
+* Algumas variáveis estão sendo consideradas, mas possuem baixo nível de significância para o modelo, portanto podemos descartá-las
 
 
 Descartando variáveis não significativas
@@ -1138,10 +1143,12 @@ print(paste('Acurácia',1-erro))
 ```
 
 Descobertas:
-- Executamos o predict da base de treino versus a base de teste, e descobrimos que o modelo gerado está com um índice de acertividade de aproximadamente 81%
+
+* Executamos o predict da base de treino versus a base de teste, e descobrimos que o modelo gerado está com um índice de acertividade de aproximadamente 81%
 
 Conclusão:
-- O modelo criado através de regressão logística multivariada em família binomial, é adequado para classificar os vinhos brancos bons, com notas iguais ou acima de 7, de acordo com a base de dados fornecida.
+
+* O modelo criado através de regressão logística multivariada em família binomial, é adequado para classificar os vinhos brancos bons, com notas iguais ou acima de 7, de acordo com a base de dados fornecida.
 
 
   
@@ -1157,6 +1164,7 @@ quais outras técnicas supervisionadas vocês indicariam como adequadas para est
 
 ## Etapa 4 - Técnicas não supervisionadas
 Como técnica não supervisionada, vamos testar se o algoritmo de clusterização será adequado para agrupar dois conjunto de vinhos, categorizando-os como vinhos bons e vinhos ruins.
+
 A variável 'quality', que identifica a nota do vinho, será a variável utilizada para correlacionar com as demais variáveis para identificar se existe algum agrupamento entre os vinhos. 
 
 Plotandos as relações das variáveis dos vinhos brancos:
@@ -1164,6 +1172,7 @@ Plotandos as relações das variáveis dos vinhos brancos:
 plot(vw)
 ```
 Clusterizando as variáveis:
+
 Abaixo está sendo criada uma função para testar a variância dos dados em relação ao número de clusters:
 
 ```{r warning=FALSE}  
@@ -1181,7 +1190,8 @@ elbow <- function(dataset){
 elbow(vw)
 ```
 
-- Observações: 
+Observações:
+
 Conforme é possível identificar, o plot está mostrando que para o dataset 'vw', o mais recomendado é utilizar 2 clusters.
 
 Criando um cluster em 2 grupos para distinguir vinhos bons de vinhos ruins:
@@ -1193,7 +1203,8 @@ plot(vw, col=modelo_white$cluster)
 points(modelo_white$centers, col = 4:1, bg = 1:4, pch = 24, cex=1, lwd=1)
 ```
 
-- Observações sobre o plot:
+Observações sobre o plot:
+
 Analisando as relações, é possível identificar que as variáveis que o cluster conseguiu agrupar melhor em dois grupos foram as variáveis 'totalsulfurdioxide' e 'freesulfurdioxide' em relação a variável 'quality'.
 
 Analisando as variáveis  'totalsulfurdioxide' e 'freesulfurdioxide' separadamente:
@@ -1218,8 +1229,11 @@ points(modelo_vinhos_white.r2$centers, col = 4:1, bg = 1:4, pch = 24, cex=1, lwd
  No grupo vermelho, ficaram os vinhos com 'totalsulfurdioxide' em média abaixo de 150 e os pretos acima de 150.
  **'freesulfurdioxide' e 'quality':**
 No grupo vermelho, ficaram os vinhos com 'freesulfurdioxide' em média abaixo de 50 e os pretos acima de 50. Sendo que os grupos se juntão um pouco.
--O grupo formado em 'totalsulfurdioxide' segue um agrupamento mais forte do que a variável 'freesulfurdioxide'. 
 
-- Conclusão sobre a técnica:
-O algoritmo de cluster não é uma técnica muito adequada para agrupar os vinhos em categorias de vinhos bons e ruins. 
+* O grupo formado em 'totalsulfurdioxide' segue um agrupamento mais forte do que a variável 'freesulfurdioxide'. 
+
+* Conclusão sobre a técnica:
+
+O algoritmo de cluster não é uma técnica muito adequada para agrupar os vinhos em categorias de vinhos bons e ruins.
+
 O agrupamento realizado pelo algoritmo não classifica com muita precisão os vinhos de acordo com a variável 'quality'. Podemos identificar que o grupo está distribuido em todas as notas de vinhos. Na nota 8, o grupo vermelho está em maior quantidade do que os pretos, na nota 3 para a variável 'freesulfurdioxide', o grupo preto está em maior quantidade em relação ao grupo vermelho.
